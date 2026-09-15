@@ -25,6 +25,7 @@ fun PostListScreen(
     viewModel: PostListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val pendingDeletionIds by viewModel.pendingDeletionIds.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
@@ -46,10 +47,15 @@ fun PostListScreen(
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(uiState.posts, key = { it.id }) { post ->
-                        PostRow (
-                            post = post,
-                            onClick = { onPostClick(post.id) }
-                        )
+                        if (post.id in pendingDeletionIds) {
+                            DeletedPostRow(onUndo = { viewModel.undoDelete(post.id) })
+                        } else {
+                            SwipeToDeletePostRow(
+                                post = post,
+                                onClick = { onPostClick(post.id) },
+                                onSwipeToDelete = { viewModel.scheduleDelete(post.id) }
+                            )
+                        }
                         HorizontalDivider()
                     }
                 }
