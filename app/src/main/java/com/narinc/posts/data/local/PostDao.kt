@@ -23,4 +23,7 @@ interface PostDao {
 
     @Query("UPDATE posts SET title = :title, body = :body WHERE id = :postId")
     suspend fun updatePost(postId: Int, title: String, body: String)
+
+    @Query("SELECT * FROM posts WHERE id = :postId")
+    fun observePostById(postId: Int): Flow<PostEntity?>
 }

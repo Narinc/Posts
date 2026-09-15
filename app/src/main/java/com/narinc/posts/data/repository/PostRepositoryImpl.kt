@@ -25,27 +25,33 @@ class PostRepositoryImpl @Inject constructor(
     override fun observePosts(): Flow<List<Post>> =
         postDao.observePosts().map { entities -> entities.map { it.toDomain() } }
 
-    override suspend fun refreshIfNeeded(): Result<Unit, DomainError> = withContext(dispatchers.io) {
-        if (postDao.count() > 0) return@withContext Result.Success(Unit)
+    override fun observePost(postId: Int): Flow<Post?> =
+        postDao.observePostById(postId).map { entity -> entity?.toDomain() }
 
-        try {
-            val dtos = apiService.getPosts()
-            postDao.insertAll(dtos.map { it.toEntity() })
-            Result.Success(Unit)
-        } catch (_: IOException) {
-            Result.Error(DomainError.NetworkError)
-        } catch (e: HttpException) {
-            Result.Error(DomainError.ServerError(e.code()))
-        } catch (_: Exception) {
-            Result.Error(DomainError.UnknownError)
+    override suspend fun refreshIfNeeded(): Result<Unit, DomainError> =
+        withContext(dispatchers.io) {
+            if (postDao.count() > 0)
+                return@withContext Result.Success(Unit)
+
+            try {
+                val dtos = apiService.getPosts()
+                postDao.insertAll(dtos.map { it.toEntity() })
+                Result.Success(Unit)
+            } catch (_: IOException) {
+                Result.Error(DomainError.NetworkError)
+            } catch (e: HttpException) {
+                Result.Error(DomainError.ServerError(e.code()))
+            } catch (_: Exception) {
+                Result.Error(DomainError.UnknownError)
+            }
         }
-    }
 
     override suspend fun deletePost(postId: Int) = withContext(dispatchers.io) {
         postDao.deleteById(postId)
     }
 
-    override suspend fun updatePost(postId: Int, title: String, body: String) = withContext(dispatchers.io) {
-        postDao.updatePost(postId, title, body)
-    }
+    override suspend fun updatePost(postId: Int, title: String, body: String) =
+        withContext(dispatchers.io) {
+            postDao.updatePost(postId, title, body)
+        }
 }
