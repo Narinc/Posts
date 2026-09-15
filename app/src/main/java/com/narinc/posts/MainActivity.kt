@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import com.narinc.posts.presentation.list.PostListScreen
 import com.narinc.posts.ui.theme.PostsTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -18,7 +19,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             PostsTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    // TODO
+                    PostListScreen(onPostClick = {
+                        TODO()
+                    })
                 }
             }
         }
