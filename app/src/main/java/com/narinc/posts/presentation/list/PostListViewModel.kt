@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.narinc.posts.core.DomainError
 import com.narinc.posts.core.Result
-import com.narinc.posts.domain.repository.PostRepository
+import com.narinc.posts.domain.usecase.DeletePostUseCase
+import com.narinc.posts.domain.usecase.ObservePostsUseCase
+import com.narinc.posts.domain.usecase.RefreshPostsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -26,7 +28,9 @@ private const val UNDO_WINDOW_MS = 3000L
 
 @HiltViewModel
 class PostListViewModel @Inject constructor(
-    private val repository: PostRepository
+    observePostsUseCase: ObservePostsUseCase,
+    private val refreshPostsUseCase: RefreshPostsUseCase,
+    private val deletePostUseCase: DeletePostUseCase
 ) : ViewModel() {
 
     private val isLoading = MutableStateFlow(false)
@@ -44,7 +48,7 @@ class PostListViewModel @Inject constructor(
         )
 
     val uiState: StateFlow<PostListUiState> = combine(
-        repository.observePosts(),
+        observePostsUseCase(),
         isLoading
     ) { posts, loading ->
         PostListUiState(posts = posts, isLoading = loading)
@@ -61,7 +65,7 @@ class PostListViewModel @Inject constructor(
     fun refresh() {
         viewModelScope.launch {
             isLoading.value = true
-            when (val result = repository.refreshIfNeeded()) {
+            when (val result = refreshPostsUseCase()) {
                 is Result.Success -> Unit
                 is Result.Error -> _errorEvents.tryEmit(result.error.toMessage())
             }
@@ -76,7 +80,7 @@ class PostListViewModel @Inject constructor(
     fun scheduleDelete(postId: Int) {
         val job = viewModelScope.launch {
             delay(UNDO_WINDOW_MS.milliseconds)
-            repository.deletePost(postId)
+            deletePostUseCase(postId)
             pendingDeletions.update { it - postId }
         }
         pendingDeletions.update { it + (postId to job) }

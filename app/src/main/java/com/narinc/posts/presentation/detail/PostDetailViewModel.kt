@@ -3,7 +3,8 @@ package com.narinc.posts.presentation.detail
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.narinc.posts.domain.repository.PostRepository
+import com.narinc.posts.domain.usecase.ObservePostUseCase
+import com.narinc.posts.domain.usecase.UpdatePostUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +15,8 @@ import javax.inject.Inject
 @HiltViewModel
 class PostDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val repository: PostRepository
+    observePostUseCase: ObservePostUseCase,
+    private val updatePostUseCase: UpdatePostUseCase
 ) : ViewModel() {
 
     private val postId: Int = checkNotNull(savedStateHandle["postId"])
@@ -24,7 +26,7 @@ class PostDetailViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            repository.observePost(postId).collect { post ->
+            observePostUseCase(postId).collect { post ->
                 if (post != null) {
                     _uiState.update {
                         it.copy(
@@ -49,7 +51,7 @@ class PostDetailViewModel @Inject constructor(
 
     fun save() {
         viewModelScope.launch {
-            repository.updatePost(postId, _uiState.value.title, _uiState.value.body)
+            updatePostUseCase(postId, _uiState.value.title, _uiState.value.body)
             _uiState.update { it.copy(isSaved = true) }
         }
     }
