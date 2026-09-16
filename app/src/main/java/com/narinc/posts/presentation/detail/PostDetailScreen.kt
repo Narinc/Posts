@@ -33,7 +33,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.narinc.posts.R
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostDetailScreen(
     onBackClick: () -> Unit,
@@ -51,24 +50,7 @@ fun PostDetailScreen(
     Scaffold(
         modifier = Modifier.imePadding(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = { Text("Detay") },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_arrow_back),
-                            contentDescription = "Geri"
-                        )
-                    }
-                },
-                actions = {
-                    TextButton(onClick = viewModel::save) {
-                        Text("Kaydet")
-                    }
-                }
-            )
-        }
+        topBar = { PostDetailTopBar(onBackClick = onBackClick, onSaveClick = viewModel::save) }
     ) { paddingValues ->
         if (uiState.isLoading) {
             CircularProgressIndicator(
@@ -77,41 +59,73 @@ fun PostDetailScreen(
                     .padding(paddingValues)
             )
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp)
-            ) {
-                AsyncImage(
-                    model = uiState.imageUrl,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(96.dp)
-                        .clip(CircleShape)
-                        .align(Alignment.CenterHorizontally)
-                )
+            PostDetailForm(
+                uiState = uiState,
+                onTitleChange = viewModel::onTitleChange,
+                onBodyChange = viewModel::onBodyChange,
+                modifier = Modifier.padding(paddingValues)
+            )
+        }
+    }
+}
 
-                OutlinedTextField(
-                    value = uiState.title,
-                    onValueChange = viewModel::onTitleChange,
-                    label = { Text("Başlık") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 24.dp)
-                )
-
-                OutlinedTextField(
-                    value = uiState.body,
-                    onValueChange = viewModel::onBodyChange,
-                    label = { Text("Açıklama") },
-                    minLines = 4,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PostDetailTopBar(
+    onBackClick: () -> Unit,
+    onSaveClick: () -> Unit
+) {
+    TopAppBar(
+        title = { Text("Detay") },
+        navigationIcon = {
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_arrow_back),
+                    contentDescription = "Geri"
                 )
             }
+        },
+        actions = {
+            TextButton(onClick = onSaveClick) { Text("Kaydet") }
         }
+    )
+}
+
+@Composable
+private fun PostDetailForm(
+    uiState: PostDetailUiState,
+    onTitleChange: (String) -> Unit,
+    onBodyChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier
+        .fillMaxSize()
+        .padding(16.dp)) {
+        AsyncImage(
+            model = uiState.imageUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(96.dp)
+                .clip(CircleShape)
+                .align(Alignment.CenterHorizontally)
+        )
+        OutlinedTextField(
+            value = uiState.title,
+            onValueChange = onTitleChange,
+            label = { Text("Başlık") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 24.dp)
+        )
+        OutlinedTextField(
+            value = uiState.body,
+            onValueChange = onBodyChange,
+            label = { Text("Açıklama") },
+            minLines = 4,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp)
+        )
     }
 }

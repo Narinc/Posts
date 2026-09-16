@@ -15,6 +15,7 @@ import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 class PostRepositoryImpl @Inject constructor(
     private val apiService: PostApiService,
@@ -37,6 +38,8 @@ class PostRepositoryImpl @Inject constructor(
                 val dtos = apiService.getPosts()
                 postDao.insertAll(dtos.map { it.toEntity() })
                 Result.Success(Unit)
+            } catch (e: CancellationException) {
+                throw e
             } catch (_: IOException) {
                 Result.Error(DomainError.NetworkError)
             } catch (e: HttpException) {
